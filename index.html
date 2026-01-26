@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>zml-tv</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+</head>
+<body>
+  <div class="tv-top">
+    <h1 class="tv-heading">zml-tv: Televised.</h1>
+    <div class="control-image" id="ascii-icon" title="home"></div>
+  </div>
+  <div class="middle-row">
+    <div class="left-sidebar"></div>
+    <div class="tv-middle">
+      <div class="tv-container">
+        <div class="tv-body">
+          <div class="ascii" id="ascii-content" contenteditable="true"></div>
+        </div>
+      </div>
+    </div>
+    <aside class="sidebar">
+      <div class="control-dials">
+        <div class="dial dial-button" id="dial-1" data-page="research" title="research">
+          <span class="button-label">research</span>
+        </div>
+        <div class="dial dial-button" id="dial-2" data-page="about" title="about">
+          <span class="button-label">about</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <div class="tv-bottom">
+    <p id="quote-text"></p>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
