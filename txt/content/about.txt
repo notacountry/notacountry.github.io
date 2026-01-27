@@ -1,1 +1,28 @@
-About
+-- Who am I
+
+I'm Zach, a second-year Joint Mathematics and Computer Science student studying at Imperial.
+In year 1, I was hyperfocused on earning money and aimed for finance internships, so I read a lot and landed an internship as a Risk Modeller.
+This year I've realised that research may be more appealing to me: specifically, AI Research.
+Following that revelation, I've read many (mainly NLP) papers and completed some research projects. This blog documents a few.
+
+You can find my CV here:
+- https://www.dropbox.com/scl/fi/6kwefwjhg3e911poatp62/CV_2028.pdf?rlkey=jz9v39j32pq0ck4qv9burxdqt
+
+-- Where am I
+
+Between 2022-2023, I hosted a weekly WordPress blog with the url 'zml-tv.live' before my Azure credits ran out.
+I don't have any record of the website's existence, other than this sole Wayback Machine link:
+- https://web.archive.org/web/20230904150811/https://zml-tv.live/2023/09/04/the-power-of-prime-factorisation/
+
+In 2026, a couple of my uni friends started making Web 1.0 style personal websites, and they inspired me to revive my old one.
+The style & structure of the blog looks very similar to this one, but here I made it more Ascii-style.
+
+The design was inspired by the Andy Warhol quote found at the bottom of this page.
+I use this Ascii style because I take notes (if at all) in '.txt' files instead of other fancy apps.
+The article content is a text box you can edit to suit your viewing preferences (if your browser window is large enough).
+
+-- On Research
+
+More university students should try research. It's what university is built for!
+You are learning in a research institution filled with professors. It is very easy to reach out and chat to researchers.
+Research, especially organised and/or published research, looks great on your CV too. Not many people do it.

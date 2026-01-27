@@ -11,13 +11,6 @@ function loadContent(page) {
     .catch(error => console.error(`Error loading ${page}:`, error));
 }
 
-fetch('txt/icon.txt')
-  .then(response => response.text())
-  .then(data => {
-    document.getElementById('ascii-icon').textContent = data;
-  })
-  .catch(error => console.error('Error loading icon:', error));
-
 fetch('txt/button.txt')
   .then(response => response.text())
   .then(data => {
@@ -42,3 +35,18 @@ document.getElementById('dial-2').addEventListener('click', () => loadContent('a
 
 // Add click handler to icon to load home page
 document.getElementById('ascii-icon').addEventListener('click', () => loadContent('home'));
+
+// Handle contenteditable based on window size
+function handleContentEditable() {
+  if (window.innerWidth <= 600) {
+    contentElement.contentEditable = 'false';
+  } else {
+    contentElement.contentEditable = 'true';
+  }
+}
+
+// Check on load
+handleContentEditable();
+
+// Check on resize
+window.addEventListener('resize', handleContentEditable);
