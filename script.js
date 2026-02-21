@@ -1,51 +1,99 @@
 const contentElement = document.getElementById('ascii-content');
+const quoteElement = document.getElementById('quote-text');
+const dialOne = document.getElementById('dial-1');
+const dialTwo = document.getElementById('dial-2');
+const asciiIcon = document.getElementById('ascii-icon');
 let currentPage = 'home';
 let isUpdating = false;
 let lastRenderedText = '';
+let contentFetchController = null;
+
+if (!contentElement) {
+  throw new Error('Missing required element: #ascii-content');
+}
+if (!quoteElement) {
+  throw new Error('Missing required element: #quote-text');
+}
+if (!dialOne) {
+  throw new Error('Missing required element: #dial-1');
+}
+if (!dialTwo) {
+  throw new Error('Missing required element: #dial-2');
+}
+if (!asciiIcon) {
+  throw new Error('Missing required element: #ascii-icon');
+}
 
 class ContentParser {
   static parse(text) {
-    const unescaped = text.replace(/\\!/g, '!').replace(/\\\[/g, '[').replace(/\\\]/g, ']');
-    const imageRegex = /(?<!\\)!\[([^\]]+)\]/g;
-    const linkRegex = /(?<!\\)\[([^\]]+)\]/g;
-    
-    const tokens = [];
-    let match;
-    
-    while ((match = imageRegex.exec(unescaped)) !== null) {
-      tokens.push({ index: match.index, length: match[0].length, type: 'image', content: match[1] });
-    }
-    
-    while ((match = linkRegex.exec(unescaped)) !== null) {
-      const isPartOfImage = tokens.some(t => match.index > t.index && match.index < t.index + t.length);
-      if (!isPartOfImage) {
-        tokens.push({ index: match.index, length: match[0].length, type: 'link', content: match[1] });
-      }
-    }
-    
-    tokens.sort((a, b) => a.index - b.index);
-    
     const parts = [];
     let lastIndex = 0;
-    tokens.forEach(token => {
-      if (token.index > lastIndex) {
-        parts.push({ type: 'text', content: unescaped.slice(lastIndex, token.index) });
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '\\') {
+        i += 1;
+        continue;
       }
-      parts.push(token);
-      lastIndex = token.index + token.length;
-    });
-    
-    if (lastIndex < unescaped.length) {
-      parts.push({ type: 'text', content: unescaped.slice(lastIndex) });
+
+      const isImage = char === '!' && text[i + 1] === '[';
+      const isLink = char === '[';
+      if (!isImage && !isLink) {
+        continue;
+      }
+
+      const openIndex = isImage ? i + 1 : i;
+      const closeIndex = ContentParser.findClosingBracket(text, openIndex + 1);
+      if (closeIndex === -1) {
+        continue;
+      }
+
+      if (i > lastIndex) {
+        parts.push({ type: 'text', content: ContentParser.unescapeDelimiters(text.slice(lastIndex, i)) });
+      }
+
+      const content = ContentParser.unescapeDelimiters(text.slice(openIndex + 1, closeIndex));
+      parts.push({ type: isImage ? 'image' : 'link', content });
+      lastIndex = closeIndex + 1;
+      i = closeIndex;
     }
-    
+
+    if (lastIndex < text.length) {
+      parts.push({ type: 'text', content: ContentParser.unescapeDelimiters(text.slice(lastIndex)) });
+    }
+
     return parts;
   }
-  
+
   static needsRerender(oldText, newText) {
-    const oldPatterns = (oldText.match(/(?<!\\)!\[[^\]]+\]|(?<!\\)\[[^\]]+\]/g) || []).join('|');
-    const newPatterns = (newText.match(/(?<!\\)!\[[^\]]+\]|(?<!\\)\[[^\]]+\]/g) || []).join('|');
-    return oldPatterns !== newPatterns;
+    const oldSignature = ContentParser.tokenSignature(oldText);
+    const newSignature = ContentParser.tokenSignature(newText);
+    return oldSignature !== newSignature;
+  }
+
+  static tokenSignature(text) {
+    return ContentParser.parse(text)
+      .filter(part => part.type !== 'text')
+      .map(part => `${part.type}:${part.content}`)
+      .join('|');
+  }
+
+  static unescapeDelimiters(text) {
+    return text.replace(/\\!/g, '!').replace(/\\\[/g, '[').replace(/\\\]/g, ']');
+  }
+
+  static findClosingBracket(text, startIndex) {
+    for (let i = startIndex; i < text.length; i++) {
+      const char = text[i];
+      if (char === '\\') {
+        i += 1;
+        continue;
+      }
+      if (char === ']') {
+        return i;
+      }
+    }
+    return -1;
   }
 }
 
@@ -103,7 +151,10 @@ class LinkRenderer {
     element.style.textDecoration = 'underline';
     element.addEventListener('click', (e) => {
       e.stopPropagation();
-      window.open(content, '_blank');
+      const shouldOpen = window.confirm(`Open this link?\n${content}`);
+      if (shouldOpen) {
+        window.open(content, '_blank');
+      }
     });
     return element;
   }
@@ -158,20 +209,36 @@ class ContentRenderer {
 }
 
 function loadContent(page) {
-  fetch(`txt/content/${page}.txt`)
-    .then(response => response.text())
+  if (contentFetchController) {
+    contentFetchController.abort();
+  }
+  contentFetchController = new AbortController();
+
+  fetchText(`txt/content/${page}.txt`, { signal: contentFetchController.signal })
     .then(data => {
       ContentRenderer.render(data);
       currentPage = page;
     })
-    .catch(error => console.error(`Error loading ${page}:`, error));
+    .catch(error => {
+      if (error.name !== 'AbortError') {
+        console.error(`Error loading ${page}:`, error);
+      }
+    });
 }
 
 function loadFile(url, callback) {
-  fetch(url)
-    .then(response => response.text())
+  fetchText(url)
     .then(callback)
     .catch(error => console.error(`Error loading ${url}:`, error));
+}
+
+function fetchText(url, options = {}) {
+  return fetch(url, options).then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} for ${url}`);
+    }
+    return response.text();
+  });
 }
 
 contentElement.addEventListener('input', () => {
@@ -186,14 +253,14 @@ contentElement.addEventListener('input', () => {
 });
 
 loadFile('txt/quote.txt', (data) => {
-  document.getElementById('quote-text').textContent = data;
+  quoteElement.textContent = data;
 });
 
 loadContent('about');
 
-document.getElementById('dial-1').addEventListener('click', () => loadContent('research'));
-document.getElementById('dial-2').addEventListener('click', () => loadContent('about'));
-document.getElementById('ascii-icon').addEventListener('click', () => loadContent(currentPage));
+dialOne.addEventListener('click', () => loadContent('research'));
+dialTwo.addEventListener('click', () => loadContent('about'));
+asciiIcon.addEventListener('click', () => loadContent(currentPage));
 
 function handleContentEditable() {
   contentElement.contentEditable = window.innerWidth > 600 ? 'true' : 'false';

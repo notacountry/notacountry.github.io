@@ -6,7 +6,7 @@ This year I've realised that research may be more appealing to me: specifically,
 Following that revelation, I've read many (mainly NLP) papers and completed some research projects. This blog documents a few.
 
 You can find my CV here:
-- [https://www.dropbox.com/scl/fi/6kwefwjhg3e911poatp62/CV_2028.pdf?rlkey=jz9v39j32pq0ck4qv9burxdqt]
+- [https://www.overleaf.com/read/wpcrjrnzbnhb#66e671]
 
 -- Where am I
 
@@ -15,11 +15,14 @@ I don't have any record of the website's existence, other than this sole Wayback
 - [https://web.archive.org/web/20230904150811/https://zml-tv.live/2023/09/04/the-power-of-prime-factorisation/]
 
 In 2026, a couple of my uni friends started making Web 1.0 style personal websites, and they inspired me to revive my old one.
-The style & structure of the blog looks very similar to this one, but here I made it more Ascii-style.
+The style & structure of the blog looks very similar to this one, but here I made it more minimalist.
 
 The design was inspired by the Andy Warhol quote found at the bottom of this page.
 I use this Ascii style because I take notes (if at all) in '.txt' files instead of other fancy apps.
 The article content is a text box you can edit to suit your viewing preferences (if your browser window is large enough).
+You can add links as shown above, or even images:
+
+- ![icons\favicon.png]
 
 -- On Research
 
