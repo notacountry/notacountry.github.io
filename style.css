@@ -115,6 +115,14 @@ body {
 
 .dial-button {
   cursor: pointer;
+  border: 2px solid black;
+  padding: 16px;
+  border-radius: 50%;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button-label {

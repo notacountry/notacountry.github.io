@@ -185,20 +185,15 @@ contentElement.addEventListener('input', () => {
   }
 });
 
-loadFile('txt/button.txt', (data) => {
-  document.getElementById('dial-1').innerHTML = `<span class="button-label">research</span><div style="white-space: pre; font-size: 14px; line-height: 1.2; margin-top: 4px;">${data}</div>`;
-  document.getElementById('dial-2').innerHTML = `<span class="button-label">about</span><div style="white-space: pre; font-size: 14px; line-height: 1.2; margin-top: 4px;">${data}</div>`;
-});
-
 loadFile('txt/quote.txt', (data) => {
   document.getElementById('quote-text').textContent = data;
 });
 
-loadContent('home');
+loadContent('about');
 
 document.getElementById('dial-1').addEventListener('click', () => loadContent('research'));
 document.getElementById('dial-2').addEventListener('click', () => loadContent('about'));
-document.getElementById('ascii-icon').addEventListener('click', () => loadContent('home'));
+document.getElementById('ascii-icon').addEventListener('click', () => loadContent(currentPage));
 
 function handleContentEditable() {
   contentElement.contentEditable = window.innerWidth > 600 ? 'true' : 'false';
