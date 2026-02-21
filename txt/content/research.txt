@@ -1,1 +1,23 @@
-Research
+Below is a list of research projects I am currently doing or have completed.
+I have a lot more to say about all of these projects: interesting details that I completely skipped and/or simplified for conciseness.
+When I have the time, I may write a seperate .txt file, further detailing each project.
+
+-- More efficient parsing for compositional embedding models
+
+I am discussing a potential project with a research group in UCL (the guys who made DisCoCat [https://arxiv.org/abs/1003.4394]).
+The current parser they use (see [https://github.com/Quantinuum/lambeq/tree/main/lambeq/text2diagram/model_based_reader]) is slow, processing about 50k words per hour.
+A problem with their current parser (I think) is that they train a transformer to categorise grammatical objects:
+- e.g., 'the dog' may be parsed as a noun phrase (NP).
+I am looking into a version which uses less ML and more straightforward parsing, assuming the user types a coherent prompt. Like most parsers, I will write it in a functional programming language (NOT Python).
+
+-- Language as a fluid
+
+My friend, Afjal, and I are working on a computational fluid dynamics project to study how language can be modelled over time as a fluid.
+We are using a method similar to piDMD, detailled in Afjal's blog post:
+- [https://medium.com/data-science-collective/using-randsvd-and-pidmd-to-optimise-dynamic-mode-decomposition-9f345f7865e1]
+
+-- Applying probabilistic computing to optimise OPM-MEG brain scanning
+
+Throughout term 1 of second year, I wrote a python package which implemented RandNLA algorithms with probabilistic hardware.
+To demonstrate its versatility, I then applied it as a proof-of-concept to optimise OPM-MEG brain scanning.
+Obviously, RandNLA algorithms, despite being much faster, are rather lossy. To fix this, I used an ising model to 'naturalise' the noisy brain scanning outputs.

@@ -208,7 +208,7 @@ class ContentRenderer {
   }
 }
 
-function loadContent(page) {
+function loadContent(page, options = {}) {
   if (contentFetchController) {
     contentFetchController.abort();
   }
@@ -218,6 +218,11 @@ function loadContent(page) {
     .then(data => {
       ContentRenderer.render(data);
       currentPage = page;
+      if (options.pushState) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page);
+        window.history.pushState({ page }, '', url.toString());
+      }
     })
     .catch(error => {
       if (error.name !== 'AbortError') {
@@ -256,11 +261,33 @@ loadFile('txt/quote.txt', (data) => {
   quoteElement.textContent = data;
 });
 
-loadContent('about');
+function getPageFromPath() {
+  const url = new URL(window.location.href);
+  const pageParam = url.searchParams.get('page');
+  if (!pageParam) {
+    return 'about';
+  }
+  return pageParam;
+}
 
-dialOne.addEventListener('click', () => loadContent('research'));
-dialTwo.addEventListener('click', () => loadContent('about'));
-asciiIcon.addEventListener('click', () => loadContent(currentPage));
+function loadInitialPage() {
+  const page = getPageFromPath();
+  loadContent(page, { pushState: false });
+  const url = new URL(window.location.href);
+  url.searchParams.set('page', page);
+  window.history.replaceState({ page }, '', url.toString());
+}
+
+loadInitialPage();
+
+dialOne.addEventListener('click', () => loadContent('research', { pushState: true }));
+dialTwo.addEventListener('click', () => loadContent('about', { pushState: true }));
+asciiIcon.addEventListener('click', () => loadContent(currentPage, { pushState: true }));
+
+window.addEventListener('popstate', (event) => {
+  const page = event.state?.page || getPageFromPath();
+  loadContent(page, { pushState: false });
+});
 
 function handleContentEditable() {
   contentElement.contentEditable = window.innerWidth > 600 ? 'true' : 'false';
