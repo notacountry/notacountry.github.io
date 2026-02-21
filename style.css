@@ -151,7 +151,7 @@ body {
   font-size: 12px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 800px) {
   .tv-top,
   .tv-heading,
   .control-image,
