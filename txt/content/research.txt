@@ -2,6 +2,12 @@ Below is a list of research projects I am currently doing or have completed.
 I have a lot more to say about all of these projects: interesting details that I completely skipped and/or simplified for conciseness.
 When I have the time, I may write a seperate .txt file, further detailing each project.
 
+-- RSVD Error Correction using Free Probability
+
+Free probability is hugely important for noncommutative objects, and I feel its applications have not been explored to its fullest extent yet.
+The (Randomized) Singular Value Decomposition is one such example. SVD is a perfect fit for free probability applied to random matrices, and randomized numerical linear algebra in general, but it has not been touched yet.
+I propose a free-probability based correction to RSVD which performs a free deconvolution. My method proves to produce fewer residuals that normal RSVD for large matrices under the spiked signal-plus-noise model.
+
 -- More efficient parsing for compositional embedding models
 
 I am discussing a potential project with a research group in UCL (the guys who made DisCoCat [https://arxiv.org/abs/1003.4394]).
