@@ -17,9 +17,9 @@ We call subsets of a language 'metaphorical domains', and compare Centered Kerne
 
 I am discussing a potential project with a research group in UCL (the guys who made DisCoCat [https://arxiv.org/abs/1003.4394]).
 The current parser they use (see [https://github.com/Quantinuum/lambeq/tree/main/lambeq/text2diagram/model_based_reader]) is slow, processing about 50k words per hour.
-A problem with their current parser (I think) is that they train a transformer to categorise grammatical objects:
+A problem with their current parser is that they train a transformer to categorise grammatical objects:
 - e.g., 'the dog' may be parsed as a noun phrase (NP).
-I am looking into a version which uses less ML and more straightforward parsing, assuming the user types a coherent prompt. Like most parsers, I will write it in a functional programming language (NOT Python).
+I am looking into a version which uses less ML and more straightforward parsing, assuming the user types a coherent prompt.
 
 -- Language as a fluid
 
