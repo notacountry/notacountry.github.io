@@ -6,7 +6,12 @@ When I have the time, I may write a seperate .txt file, further detailing each p
 
 Free probability is hugely important for noncommutative objects, and I feel its applications have not been explored to its fullest extent yet.
 The (Randomized) Singular Value Decomposition is one such example. SVD is a perfect fit for free probability applied to random matrices, and randomized numerical linear algebra in general, but it has not been touched yet.
-I propose a free-probability based correction to RSVD which performs a free deconvolution. My method proves to produce fewer residuals that normal RSVD for large matrices under the spiked signal-plus-noise model.
+I propose a free-probability based correction to RSVD which performs a free deconvolution. My method proves to produce lower residuals than normal RSVD for large matrices under the spiked signal-plus-noise model.
+
+-- Intra-representational Alignment
+
+Representational alignment (RA) seeks to compare subsets of two different embedding spaces. Oddly enough, no research has been performed on similarities between subsets of the same embedding space.
+We call subsets of a language 'metaphorical domains', and compare Centered Kernel Alignment (a technique in normal RA), Graph Edit Distance, and a sparse variant of both. We find the sparse variants perform significantly better than the non-spare variants.
 
 -- More efficient parsing for compositional embedding models
 
