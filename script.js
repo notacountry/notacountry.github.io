@@ -1,37 +1,18 @@
-const contentElement = document.getElementById('ascii-content');
-const quoteElement = document.getElementById('quote-text');
-const dialOne = document.getElementById('dial-1');
-const dialTwo = document.getElementById('dial-2');
-const asciiIcon = document.getElementById('ascii-icon');
-let currentPage = 'home';
-let isUpdating = false;
-let lastRenderedText = '';
-let contentFetchController = null;
-
-if (!contentElement) {
-  throw new Error('Missing required element: #ascii-content');
-}
-if (!quoteElement) {
-  throw new Error('Missing required element: #quote-text');
-}
-if (!dialOne) {
-  throw new Error('Missing required element: #dial-1');
-}
-if (!dialTwo) {
-  throw new Error('Missing required element: #dial-2');
-}
-if (!asciiIcon) {
-  throw new Error('Missing required element: #ascii-icon');
-}
+const VALID_PAGES = ['about', 'research'];
+const DEFAULT_PAGE = 'about';
 
 class ContentParser {
+  static isEscapeChar(char) {
+    return char === '\\';
+  }
+
   static parse(text) {
     const parts = [];
     let lastIndex = 0;
 
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
-      if (char === '\\') {
+      if (ContentParser.isEscapeChar(char)) {
         i += 1;
         continue;
       }
@@ -65,19 +46,6 @@ class ContentParser {
     return parts;
   }
 
-  static needsRerender(oldText, newText) {
-    const oldSignature = ContentParser.tokenSignature(oldText);
-    const newSignature = ContentParser.tokenSignature(newText);
-    return oldSignature !== newSignature;
-  }
-
-  static tokenSignature(text) {
-    return ContentParser.parse(text)
-      .filter(part => part.type !== 'text')
-      .map(part => `${part.type}:${part.content}`)
-      .join('|');
-  }
-
   static unescapeDelimiters(text) {
     return text.replace(/\\!/g, '!').replace(/\\\[/g, '[').replace(/\\\]/g, ']');
   }
@@ -85,61 +53,18 @@ class ContentParser {
   static findClosingBracket(text, startIndex) {
     for (let i = startIndex; i < text.length; i++) {
       const char = text[i];
-      if (char === '\\') {
+      if (ContentParser.isEscapeChar(char)) {
         i += 1;
         continue;
+      }
+      if (char === '\n') {
+        return -1;
       }
       if (char === ']') {
         return i;
       }
     }
     return -1;
-  }
-}
-
-class CursorManager {
-  static save(element) {
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const preSelectionRange = range.cloneRange();
-      preSelectionRange.selectNodeContents(element);
-      preSelectionRange.setEnd(range.startContainer, range.startOffset);
-      return preSelectionRange.toString().length;
-    }
-    return 0;
-  }
-  
-  static restore(element, position) {
-    const selection = window.getSelection();
-    const range = document.createRange();
-    let charCount = 0;
-    let found = false;
-    
-    const traverse = (node) => {
-      if (found) return;
-      if (node.nodeType === Node.TEXT_NODE) {
-        const nextCharCount = charCount + node.length;
-        if (position <= nextCharCount) {
-          range.setStart(node, position - charCount);
-          range.collapse(true);
-          found = true;
-          return;
-        }
-        charCount = nextCharCount;
-      } else {
-        for (let i = 0; i < node.childNodes.length; i++) {
-          traverse(node.childNodes[i]);
-          if (found) return;
-        }
-      }
-    };
-    
-    traverse(element);
-    if (found) {
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
   }
 }
 
@@ -151,9 +76,15 @@ class LinkRenderer {
     element.style.textDecoration = 'underline';
     element.addEventListener('click', (e) => {
       e.stopPropagation();
-      const shouldOpen = window.confirm(`Open this link?\n${content}`);
-      if (shouldOpen) {
-        window.open(content, '_blank');
+      try {
+        const url = new URL(content);
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+          window.open(content, '_blank');
+        } else {
+          console.warn('Blocked non-http link:', content);
+        }
+      } catch {
+        console.warn('Invalid URL:', content);
       }
     });
     return element;
@@ -174,124 +105,142 @@ class ImageRenderer {
   }
 }
 
-class ContentRenderer {
-  static render(text) {
-    if (isUpdating) return;
-    isUpdating = true;
-    
-    const cursorPos = CursorManager.save(contentElement);
-    contentElement.innerHTML = '';
-    
+function appendBracketed(parent, prefix, innerEl, suffix) {
+  parent.appendChild(document.createTextNode(prefix));
+  parent.appendChild(innerEl);
+  parent.appendChild(document.createTextNode(suffix));
+}
+
+async function fetchText(url, options = {}) {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${url}`);
+  }
+  return await response.text();
+}
+
+class App {
+  constructor() {
+    this.contentElement = document.getElementById('ascii-content');
+    this.inputElement   = document.getElementById('ascii-input');
+    this.quoteElement   = document.getElementById('quote-text');
+    this.asciiIcon      = document.getElementById('ascii-icon');
+
+    if (!this.contentElement) throw new Error('Missing required element: #ascii-content');
+    if (!this.inputElement)   throw new Error('Missing required element: #ascii-input');
+    if (!this.quoteElement)   throw new Error('Missing required element: #quote-text');
+    if (!this.asciiIcon)      throw new Error('Missing required element: #ascii-icon');
+
+    this.state = {
+      currentPage:     DEFAULT_PAGE,
+      fetchController: null,
+    };
+    this._renderFrame = null;
+
+    this._setupEventListeners();
+    this._loadQuote();
+    this._loadInitialPage();
+  }
+
+  render(text) {
     const parts = ContentParser.parse(text);
-    
-    parts.forEach(part => {
-      if (part.type === 'text') {
-        contentElement.appendChild(document.createTextNode(part.content));
-      } else if (part.type === 'link') {
-        contentElement.appendChild(document.createTextNode('['));
-        contentElement.appendChild(LinkRenderer.render(part.content));
-        contentElement.appendChild(document.createTextNode(']'));
-      } else if (part.type === 'image') {
-        contentElement.appendChild(document.createTextNode('!['));
-        contentElement.appendChild(LinkRenderer.render(part.content));
-        contentElement.appendChild(document.createTextNode(']'));
-        
-        const imgContainer = document.createElement('span');
-        imgContainer.appendChild(ImageRenderer.render(part.content));
-        contentElement.appendChild(imgContainer);
-      }
-    });
-    
-    CursorManager.restore(contentElement, cursorPos);
-    lastRenderedText = text;
-    isUpdating = false;
+    this._renderParts(parts);
   }
-}
 
-function loadContent(page, options = {}) {
-  if (contentFetchController) {
-    contentFetchController.abort();
-  }
-  contentFetchController = new AbortController();
+  _renderParts(parts) {
+    try {
+      this.contentElement.innerHTML = '';
 
-  fetchText(`txt/content/${page}.txt`, { signal: contentFetchController.signal })
-    .then(data => {
-      ContentRenderer.render(data);
-      currentPage = page;
-      if (options.pushState) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('page', page);
-        window.history.pushState({ page }, '', url.toString());
-      }
-    })
-    .catch(error => {
-      if (error.name !== 'AbortError') {
-        console.error(`Error loading ${page}:`, error);
-      }
-    });
-}
-
-function loadFile(url, callback) {
-  fetchText(url)
-    .then(callback)
-    .catch(error => console.error(`Error loading ${url}:`, error));
-}
-
-function fetchText(url, options = {}) {
-  return fetch(url, options).then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} for ${url}`);
-    }
-    return response.text();
-  });
-}
-
-contentElement.addEventListener('input', () => {
-  if (!isUpdating) {
-    const text = contentElement.textContent;
-    if (ContentParser.needsRerender(lastRenderedText, text)) {
-      ContentRenderer.render(text);
-    } else {
-      lastRenderedText = text;
+      parts.forEach(part => {
+        if (part.type === 'text') {
+          this.contentElement.appendChild(document.createTextNode(part.content));
+        } else if (part.type === 'link') {
+          appendBracketed(this.contentElement, '[', LinkRenderer.render(part.content), ']');
+        } else if (part.type === 'image') {
+          appendBracketed(this.contentElement, '![', LinkRenderer.render(part.content), ']');
+          const imgContainer = document.createElement('span');
+          imgContainer.appendChild(ImageRenderer.render(part.content));
+          this.contentElement.appendChild(imgContainer);
+        }
+      });
+    } catch (e) {
+      console.error('Render error:', e);
     }
   }
-});
 
-loadFile('txt/quote.txt', (data) => {
-  quoteElement.textContent = data;
-});
+  loadContent(page, options = {}) {
+    if (this.state.fetchController) {
+      this.state.fetchController.abort();
+    }
+    this.state.fetchController = new AbortController();
 
-function getPageFromPath() {
-  const url = new URL(window.location.href);
-  const pageParam = url.searchParams.get('page');
-  if (!pageParam) {
-    return 'about';
+    fetchText(`txt/content/${page}.txt`, { signal: this.state.fetchController.signal })
+      .then(data => {
+        this.inputElement.value = data;
+        this.render(data);
+        this.state.currentPage = page;
+        if (options.pushState) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('page', page);
+          window.history.pushState({ page }, '', url.toString());
+        }
+      })
+      .catch(error => {
+        if (error.name !== 'AbortError') {
+          console.error(`Error loading ${page}:`, error);
+        }
+      });
   }
-  return pageParam;
+
+  _loadQuote() {
+    fetchText('txt/quote.txt')
+      .then(data => { this.quoteElement.textContent = data; })
+      .catch(error => console.error('Error loading quote:', error));
+  }
+
+  _getPageFromPath() {
+    const url = new URL(window.location.href);
+    const param = url.searchParams.get('page');
+    return VALID_PAGES.includes(param) ? param : DEFAULT_PAGE;
+  }
+
+  _loadInitialPage() {
+    const page = this._getPageFromPath();
+    this.loadContent(page, { pushState: false });
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    window.history.replaceState({ page }, '', url.toString());
+  }
+
+  _setupEventListeners() {
+    this.inputElement.addEventListener('input', () => {
+      cancelAnimationFrame(this._renderFrame);
+      this._renderFrame = requestAnimationFrame(() => {
+        const parts = ContentParser.parse(this.inputElement.value);
+        this._renderParts(parts);
+      });
+    });
+
+    this.contentElement.addEventListener('click', () => this.inputElement.focus({ preventScroll: true }));
+
+    document.querySelectorAll('.dial-button').forEach(dial => {
+      dial.addEventListener('click', () => {
+        const page = dial.dataset.page;
+        if (VALID_PAGES.includes(page)) {
+          this.loadContent(page, { pushState: true });
+        }
+      });
+    });
+
+    this.asciiIcon.addEventListener('click', () => {
+      this.loadContent(this.state.currentPage, { pushState: true });
+    });
+
+    window.addEventListener('popstate', (event) => {
+      const page = event.state?.page || this._getPageFromPath();
+      this.loadContent(page, { pushState: false });
+    });
+  }
 }
 
-function loadInitialPage() {
-  const page = getPageFromPath();
-  loadContent(page, { pushState: false });
-  const url = new URL(window.location.href);
-  url.searchParams.set('page', page);
-  window.history.replaceState({ page }, '', url.toString());
-}
-
-loadInitialPage();
-
-dialOne.addEventListener('click', () => loadContent('research', { pushState: true }));
-dialTwo.addEventListener('click', () => loadContent('about', { pushState: true }));
-asciiIcon.addEventListener('click', () => loadContent(currentPage, { pushState: true }));
-
-window.addEventListener('popstate', (event) => {
-  const page = event.state?.page || getPageFromPath();
-  loadContent(page, { pushState: false });
-});
-
-function handleContentEditable() {
-  contentElement.contentEditable = window.innerWidth > 600 ? 'true' : 'false';
-}
-
-handleContentEditable();
-window.addEventListener('resize', handleContentEditable);
+new App();

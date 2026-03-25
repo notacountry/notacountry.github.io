@@ -1,3 +1,12 @@
+:root {
+  --tv-top-height: 142px;
+  --sidebar-width: 280px;
+  --left-sidebar-width: 40px;
+  --dial-size: 140px;
+  --font-size-body: 14px;
+  --spacing: 16px;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -16,12 +25,12 @@ body {
 
 .tv-top {
   width: 100%;
-  height: 142px;
+  height: var(--tv-top-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  padding: 0 0 0 16px;
+  padding: 0 0 0 var(--spacing);
 }
 
 .tv-heading {
@@ -29,14 +38,14 @@ body {
   font-size: 24px;
   font-weight: bold;
   flex-shrink: 0;
-  padding-left: calc(40px + 16px);
+  padding-left: calc(var(--left-sidebar-width) + var(--spacing));
 }
 
 .control-image {
   cursor: pointer;
   margin-left: auto;
-  width: 280px;
-  height: 142px;
+  width: var(--sidebar-width);
+  height: var(--tv-top-height);
   display: block;
 }
 
@@ -48,7 +57,7 @@ body {
 
 .left-sidebar {
   flex-shrink: 0;
-  width: 40px;
+  width: var(--left-sidebar-width);
 }
 
 .tv-middle {
@@ -69,30 +78,62 @@ body {
   flex: 1;
   overflow: auto;
   min-width: 0;
-  padding: 16px 0 0 16px;
+  padding: var(--spacing) 0 0 var(--spacing);
 }
 
 .ascii {
   display: block;
   width: 100%;
-  height: 100%;
   white-space: pre-wrap;
   line-height: 1.25;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   margin: 0;
   padding: 0;
 }
 
-.ascii:focus {
+.editor-container {
+  display: grid;
+  min-height: 100%;
+}
+
+.editor-container > * {
+  grid-area: 1 / 1;
+}
+
+#ascii-content {
+  pointer-events: auto;
+}
+
+.editor-container:focus-within #ascii-content {
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+#ascii-input {
+  font-family: inherit;
+  background: transparent;
+  color: transparent;
+  caret-color: black;
+  resize: none;
+  border: none;
   outline: none;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.editor-container:focus-within #ascii-input {
+  color: inherit;
+  pointer-events: auto;
 }
 
 .sidebar {
   flex-shrink: 0;
-  width: 280px;
+  width: var(--sidebar-width);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing);
   padding: 14px 0 14px 12px;
 }
 
@@ -107,7 +148,7 @@ body {
 
 .dial {
   white-space: pre-wrap;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   line-height: 1.2;
   flex-shrink: 0;
   position: relative;
@@ -116,10 +157,10 @@ body {
 .dial-button {
   cursor: pointer;
   border: 2px solid black;
-  padding: 16px;
+  padding: var(--spacing);
   border-radius: 50%;
-  width: 140px;
-  height: 140px;
+  width: var(--dial-size);
+  height: var(--dial-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,9 +181,9 @@ body {
 
 .tv-bottom {
   flex-shrink: 0;
-  padding: 16px;
-  padding-left: calc(40px + 16px);
-  padding-right: calc(280px + 16px);
+  padding: var(--spacing);
+  padding-left: calc(var(--left-sidebar-width) + var(--spacing));
+  padding-right: calc(var(--sidebar-width) + var(--spacing));
 }
 
 .tv-bottom p {
@@ -151,6 +192,7 @@ body {
   font-size: 12px;
 }
 
+/* 800px matches MOBILE_BREAKPOINT in script.js — CSS custom properties cannot be used in media query conditions */
 @media (max-width: 800px) {
   .tv-top,
   .tv-heading,
